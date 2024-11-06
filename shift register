@@ -1,0 +1,204 @@
+--VHDL code
+--------------------------------------------------------------------------------
+-- Company:
+-- Engineer:
+-- Create Date: 05.08.2024 10:34:28
+-- Design Name:
+-- Module Name: Uni_Shift_Register - Behavioral
+-- Project Name:
+-- Target Devices:
+-- Tool Versions:
+-- Description:
+-- Dependencies:
+-- Revision:
+-- Revision 0.01 - File Created
+-- Additional Comments:
+----------------------------------------------------------------------------------
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+-- Uncomment the following library declaration if using
+-- arithmetic functions with Signed or Unsigned values
+--use IEEE.NUMERIC_STD.ALL;
+-- Uncomment the following library declaration if instantiating
+-- any Xilinx leaf cells in this code.
+--library UNISIM;
+--use UNISIM.VComponents.all;
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+-- Uncomment the following library declaration if using
+-- arithmetic functions with Signed or Unsigned values
+--use IEEE.NUMERIC_STD.ALL;
+-- Uncomment the following library declaration if instantiating
+-- any Xilinx leaf cells in this code.
+--library UNISIM;
+--use UNISIM.VComponents.all;
+entity Uni_Shift_Register is
+Port (
+clk : in STD_LOGIC;
+reset : in STD_LOGIC;
+si : in STD_LOGIC;
+pi : in STD_LOGIC_VECTOR (3 downto 0);
+mode : in STD_LOGIC_VECTOR (1 downto 0);
+load : in STD_LOGIC;
+po : out STD_LOGIC_VECTOR (3 downto 0);
+so : out STD_LOGIC
+);
+end Uni_Shift_Register;
+architecture Behavioral of Uni_Shift_Register is
+signal clkout : std_logic := '0';
+signal counter : integer range 0 to 49999999 := 0;
+signal temp : std_logic_vector(3 downto 0) := "0000";
+begin
+process (clk, reset)
+begin
+if(reset ='1') then
+clkout <= '0';
+counter <= 0;
+elsif (clk'event and clk='1') then
+if(counter = 49999999) then
+clkout <= not clkout;
+counter <= 0;
+else
+counter <= counter + 1;
+end if;
+end if;
+end process;
+process (clkout, reset)
+begin
+if reset = '1' then
+so <= '0';
+po <= (others => '0');
+elsif (clkout'event and clkout='1') then
+case mode is
+when "00" => --PIPO
+po <= pi;
+when "01" => --SISO
+temp(3) <= si;
+temp(2) <= temp(3);
+temp(1) <= temp(2);
+temp(0) <= temp(1);
+so <= temp(0);
+when "10" => --PISO
+if load = '1' then
+temp <= pi;
+else
+temp(3) <= si;
+temp(2) <= temp(3);
+temp(1) <= temp(2);
+temp(0) <= temp(1);
+so <= temp(0);
+end if;
+when "11" => --SIPO
+if load = '0' then
+temp(3) <= si;
+temp(2) <= temp(3);
+temp(1) <= temp(2);
+temp(0) <= temp(1);
+else
+po <= temp;
+end if;
+when others =>
+po <= (others => '0');
+end case;
+end if;
+end process;
+end Behavioral;
+
+--TESTBENCH CODE
+----------------------------------------------------------------------------------
+-- Company:
+-- Engineer:
+--
+-- Create Date: 29.07.2024 10:48:06
+-- Design Name:
+-- Module Name: Shift_Register_Test - behave
+-- Project Name:
+-- Target Devices:
+-- Tool Versions:
+-- Description:
+--
+-- Dependencies:
+--
+-- Revision:
+-- Revision 0.01 - File Created
+-- Additional Comments:
+--
+----------------------------------------------------------------------------------
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+-- Uncomment the following library declaration if using
+-- arithmetic functions with Signed or Unsigned values
+--use IEEE.NUMERIC_STD.ALL;
+-- Uncomment the following library declaration if instantiating
+-- any Xilinx leaf cells in this code.
+--library UNISIM;
+--use UNISIM.VComponents.all;
+entity sr_test is
+-- Port ( );
+end sr_test;
+architecture Behavioral of sr_test is
+component SHIFT_REG is
+Port(
+clk : in STD_LOGIC;
+reset : in STD_LOGIC;
+si : in STD_LOGIC;
+pi : in STD_LOGIC_VECTOR (3 downto 0);
+mode : in STD_LOGIC_VECTOR (1 downto 0);
+load : in STD_LOGIC;
+po : out STD_LOGIC_VECTOR (3 downto 0);
+so : out STD_LOGIC
+);
+end component;
+signal clk : STD_LOGIC;
+signal reset : STD_LOGIC;
+signal si : STD_LOGIC;
+signal pi : STD_LOGIC_VECTOR (3 downto 0) :="0000";
+signal mode : STD_LOGIC_VECTOR (1 downto 0) :="00";
+signal load : STD_LOGIC;
+signal po : STD_LOGIC_VECTOR (3 downto 0);
+signal so : STD_LOGIC;
+constant clk_period : time := 10ns;
+begin
+uut: SHIFT_REG port map(
+clk => clk,
+reset => reset,
+si => si,
+pi => pi,
+mode => mode,
+load => load,
+po => po,
+so => so
+);
+stimuli: process
+begin
+clk <= '0';
+wait for clk_period/2 ;
+clk <= '1';
+wait for clk_period/2 ;
+end process;
+process
+begin
+reset <= '1';
+wait for 10ns;
+reset <= '0';
+wait for 10ns;
+mode <= "00";
+pi <= "1100";
+wait for 10 ns;
+mode <= "01";
+si <= '1';
+wait for 50ns;
+mode <= "10";
+load <= '1';
+pi <= "1010";
+wait for 20ns;
+load <= '0';
+wait for 40ns;
+mode <= "11";
+load <= '0';
+si <= '1';
+wait for 40ns;
+load <= '1';
+wait for 20ns;
+end process;
+end Behavioral;
