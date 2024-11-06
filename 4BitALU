@@ -1,0 +1,93 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.std_logic_unsigned.ALL;
+entity ALU_4bit is
+Port ( n1 : in STD_LOGIC_VECTOR (3 downto 0);
+n2 : in STD_LOGIC_VECTOR (3 downto 0);
+op : in STD_LOGIC_VECTOR (2 downto 0);
+result : out STD_LOGIC_VECTOR (3 downto 0);
+flag : out STD_LOGIC);
+end ALU_4bit;
+architecture behave of ALU_4bit is
+begin
+process(n1,n2,op)
+variable temp :std_logic_vector(4 downto 0);
+begin
+case op is
+when "000" =>
+temp := ('0' & n1) + n2 ;
+result <= temp(3 downto 0);
+flag <= temp(4);
+when "001" =>
+if(n1>n2) then
+result <= n1-n2;
+else
+result <= n2-n1;
+end if;
+when "010" =>
+result <= n1 nand n2;
+when "011" =>
+result <= n1 nor n2;
+when "100" =>
+result <= n1 and n2;
+when "101" =>
+result <= n1 or n2;
+when "110" =>
+result <= n1 xor n2;
+when others =>
+result <= n1 xnor n2;
+end case;
+end process;
+end behave;
+
+2. VHDL Test Bench Code
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+entity ALU_Test is
+end ALU_Test;
+architecture Behavioral of ALU_Test is
+COMPONENT ALU_4bit
+PORT(
+n1 : IN std_logic_vector(3 downto 0);
+n2 : IN std_logic_vector(3 downto 0);
+op : IN std_logic_vector(2 downto 0);
+result : OUT std_logic_vector(3 downto 0);
+flag : OUT std_logic
+);
+END COMPONENT;
+signal n1 : std_logic_vector(3 downto 0) := (others => '0');
+signal n2 : std_logic_vector(3 downto 0) := (others => '0');
+signal op : std_logic_vector(2 downto 0) := (others => '0');
+signal result: std_logic_vector(3 downto 0);
+signal flag : std_logic;
+begin
+uut: ALU_4bit PORT MAP (
+n1 => n1,
+n2 => n2,
+op => op,
+result=> result,
+flag => flag
+);
+stim_proc: process
+begin
+n1 <= "0110";
+n2 <= "0111";
+op <= "000";
+wait for 10 ns;
+op <= "001";
+wait for 10 ns;
+op <= "010";
+wait for 10 ns;
+op <= "011";
+wait for 10 ns;
+op <= "100";
+wait for 10 ns;
+op <= "101";
+wait for 10 ns;
+op <= "110";
+wait for 10 ns;
+op <= "111";
+wait for 10 ns;
+wait;
+end process;
+end Behavioral;
