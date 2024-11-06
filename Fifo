@@ -1,0 +1,111 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.std_logic_unsigned.all;
+use ieee.std_logic_arith.all;
+entity FIFO is
+Port ( clk : in STD_LOGIC;
+reset : in STD_LOGIC;
+read_en : in STD_LOGIC;
+write_en : in STD_LOGIC;
+data_out : out STD_LOGIC_VECTOR (7 downto 0);
+full : out STD_LOGIC;
+empty : out STD_LOGIC);
+end FIFO;
+architecture Behavioral of FIFO is
+type fifo is array (0 to 7) of std_logic_vector (7 downto 0);
+signal memory: fifo;
+signal rdptr, wrptr: integer range 0 to 7;
+type data_in is array (0 to 7) of std_logic_vector (7 downto 0);
+signal data: data_in := ("01000101", "11000000", "11000100",
+"11111000", "10101010", "01010101", "10000000", "00000001");
+begin
+process (clk, reset)
+begin
+if (clk'event and clk='1') then
+if (reset = '1') then
+for i in 0 to 7 loop
+memory(i) <= "00000000";
+end loop;
+empty <= '1';
+full <= '0';
+rdptr <= 0;
+wrptr <= 0;
+elsif (write_en = '1') then
+memory(wrptr) <= data(wrptr);
+empty <= '0';
+if (wrptr = 7) then
+wrptr <= 0;
+full <= '1';
+else
+wrptr <= wrptr + 1;
+end if;
+elsif (read_en = '1') then
+data_out <= memory(rdptr);
+full <= '0';
+if (rdptr = 7) then
+rdptr <= 0;
+empty <= '1';
+else
+rdptr <= rdptr + 1;
+empty <= '0';
+end if;
+else
+data_out <= "ZZZZZZZZ";
+end if;
+end if;
+end process;
+end Behavioral;
+
+2. VHDL Test Bench Code
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+entity FIFO_Test is
+end FIFO_TEST;
+architecture Behavioral of FIFO_Test is
+component FIFO is
+Port ( clk : in STD_LOGIC;
+reset : in STD_LOGIC;
+read_en : in STD_LOGIC;
+write_en : in STD_LOGIC;
+data_out : out STD_LOGIC_VECTOR (7 downto 0);
+full : out STD_LOGIC;
+empty : out STD_LOGIC);
+end component;
+signal clk : std_logic := '0';
+signal reset : std_logic := '0';
+signal read_en : std_logic := '0';
+signal write_en : std_logic := '0';
+signal data_out : std_logic_vector(7 downto 0);
+signal full : std_logic;
+signal empty : std_logic;
+constant clk_period: time := 10 ns;
+begin
+uut: FIFO port map (
+clk => clk,
+reset => reset,
+read_en => read_en,
+write_en => write_en,
+data_out => data_out,
+full => full,
+empty => empty);
+process
+begin
+clk <= '0';
+wait for clk_period/2;
+clk <= '1';
+wait for clk_period/2;
+end process;
+process
+begin
+reset <= '1';
+wait for 20 ns;
+reset <= '0';
+write_en <= '1';
+wait for 80 ns;
+write_en <= '0';
+read_en <= '1';
+wait for 80 ns;
+read_en <= '0';
+wait;
+end process;
+end behavioral;
